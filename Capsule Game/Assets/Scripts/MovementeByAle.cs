@@ -10,7 +10,9 @@ public class MovementeByAle : MonoBehaviour {
         public string jumpKey;
         public string crouchKey;
 
-        private float climbTime = 0;
+        public float maxClimbTime = 2;
+		public float climbSpeed = 5f;
+		private float climbTime;
         public float moveSpeed;
         public float jumpforce = 50;
         public float SpeedMolt = 1;
@@ -23,13 +25,15 @@ public class MovementeByAle : MonoBehaviour {
         public bool canBackwards;
         public bool canRight;
         public bool canLeft;
+		//[HideInInspector] 					//COME SUGGERISCE IL NOME, NASCONDE LA VARIABILE DALL'INSPECTOR PUR ESSENDO PUBBLICA
         public bool wallclimbing;
+		//[HideInInspector] 	
         public bool canWallclimb;
         
 
 
     // Use this for initialization
-    void Start()
+    void Start()									//METTI TUTTO QUESTO NELLA DICHIARAZIONE
         {
         rb = GetComponent<Rigidbody>();
         stanceCheck = true;
@@ -45,7 +49,7 @@ public class MovementeByAle : MonoBehaviour {
     // Update is called once per frame
     void Update()
         {
-        Debug.Log(canWallclimb);
+        //Debug.Log(canWallclimb);
 
         //MODIFICATORE VOLOCITà PER LA CORSA
         if (Input.GetKey(runKey) && SpeedMolt <= 2)
@@ -72,8 +76,10 @@ public class MovementeByAle : MonoBehaviour {
         { transform.localScale = new Vector3(1, 1, 1);
             isCrouching = false;  }
 
+
+		CheckWallClimb();
         //WALLCLIMBING      SISTEMARE! LO SCRIPTE DEVE SEMPRE ESEGUIRE TROPPA ROBA
-        if ((climbTime < 60) && (wallclimbing == false) && (canWallclimb == true))
+        /*if ((climbTime < 60) && (wallclimbing == false) && (canWallclimb == true))
             { climbTime = 60; }
         RaycastHit hit;
         int layerMask = 1 << 8;
@@ -95,7 +101,7 @@ public class MovementeByAle : MonoBehaviour {
             wallclimbing = false;
             rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
             rb.useGravity = true;
-        }
+        }*/
 
     }
 
@@ -132,19 +138,37 @@ public class MovementeByAle : MonoBehaviour {
 
 
 
-    void OnTriggerEnter(Collider other)
-        {
-            if (other.gameObject.CompareTag("Pick Up"))
-            {
-                Destroy(other.gameObject);
+	void OnTriggerEnter(Collider other)
+	{
+		if (other.gameObject.CompareTag("Pick Up"))
+		{
+			Destroy(other.gameObject);
 
-            }     
+		}
 
-        }
+	}
 
-
-
-
-
-
+	void CheckWallClimb()
+	{
+		if (canWallclimb && climbTime < maxClimbTime && Input.GetKey(KeyCode.W))
+		{
+			climbTime += 1 * Time.deltaTime;
+			WallClimb();
+		}
+		else
+		{
+			if (!canWallclimb)
+			{
+				climbTime = 0;
+				wallclimbing = false;
+			}
+			rb.useGravity = true;
+		}
+	}
+	void WallClimb()
+	{
+		wallclimbing = true;
+		rb.useGravity = false;
+		rb.position += transform.up * Time.deltaTime * climbSpeed * SpeedMolt;
+	}
 }

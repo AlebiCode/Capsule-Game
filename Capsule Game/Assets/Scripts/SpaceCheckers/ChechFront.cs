@@ -9,6 +9,7 @@ public class ChechFront : MonoBehaviour {
         if (theCollision.gameObject.tag == "Structure")
         {
             GameObject.Find("player").GetComponent<MovementeByAle>().canFoward = false;
+			GameObject.Find("player").GetComponent<MovementeByAle>().canWallclimb = true;
         }
     }
 
@@ -17,6 +18,7 @@ public class ChechFront : MonoBehaviour {
         if (theCollision.gameObject.tag == "Structure")
         {
             GameObject.Find("player").GetComponent<MovementeByAle>().canFoward = true;
+			GameObject.Find("player").GetComponent<MovementeByAle>().canWallclimb = false;
         }
     }
 }
