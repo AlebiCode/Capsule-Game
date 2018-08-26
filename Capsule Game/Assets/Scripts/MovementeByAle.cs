@@ -5,47 +5,48 @@ using UnityEngine;
 public class MovementeByAle : MonoBehaviour {
 
         private Rigidbody rb;
+
         public string runKey;
         public string jumpKey;
-        public string crouchKey; 
+        public string crouchKey;
+
+        private float climbTime = 0;
         public float moveSpeed;
         public float jumpforce = 50;
         public float SpeedMolt = 1;
+
+        public bool stanceCheck = true;
         private bool canJump;
-        private bool isCrouching;
-        bool isgrounded;
+        private bool isCrouching = false;
+        public bool isgrounded = false;
+        public bool canFoward;
+        public bool canBackwards;
+        public bool canRight;
+        public bool canLeft;
+        public bool wallclimbing;
+        public bool canWallclimb;
+        
+
 
     // Use this for initialization
     void Start()
         {
         rb = GetComponent<Rigidbody>();
-        isgrounded = false;
-        isCrouching = false;
+        stanceCheck = true;
+        canRight = true;
+        canLeft = true;
+        canFoward = true;
+        canBackwards = true;
+        canWallclimb = true;
+        wallclimbing = false;
     }
 
-
-
-
-    void OnCollisionEnter(Collision theCollision)
-    {
-        if (theCollision.gameObject.tag == "SetPlayerGrounded")
-        {
-            isgrounded = true;
-        }
-    }
-    void OnCollisionExit(Collision theCollision)
-    {
-        if (theCollision.gameObject.tag == "SetPlayerGrounded")
-        {
-            isgrounded = false;
-        }
-    }
-
-   
 
     // Update is called once per frame
     void Update()
         {
+        Debug.Log(canWallclimb);
+
         //MODIFICATORE VOLOCITà PER LA CORSA
         if (Input.GetKey(runKey) && SpeedMolt <= 2)
         {
@@ -62,38 +63,61 @@ public class MovementeByAle : MonoBehaviour {
             //QUESTO ROTEA IL PERSONAGGIO DOVE LA TELECAMERA GUARDA
             transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, Camera.main.transform.localEulerAngles.y, transform.localEulerAngles.z);
         //CROUCH
-        RaycastHit hit;
-        Ray CanStand = new Ray(transform.position,Vector3.up);
         if (Input.GetKeyDown(crouchKey) && isCrouching==false) 
         {
             transform.localScale = new Vector3(1, 0.5f, 1);
             isCrouching = true;
         }
-        else if (Input.GetKeyDown(crouchKey) && isCrouching==true && !Physics.Raycast(transform.position,transform.TransformDirection(Vector3.up), out hit,0.5f))
+        else if (Input.GetKeyDown(crouchKey) && isCrouching==true && stanceCheck == true)
         { transform.localScale = new Vector3(1, 1, 1);
             isCrouching = false;  }
+
+        //WALLCLIMBING      SISTEMARE! LO SCRIPTE DEVE SEMPRE ESEGUIRE TROPPA ROBA
+        if ((climbTime < 60) && (wallclimbing == false) && (canWallclimb == true))
+            { climbTime = 60; }
+        RaycastHit hit;
+        int layerMask = 1 << 8;
+        if (climbTime<= 0 || Input.GetKeyUp(jumpKey))
+            {
+            canWallclimb = false;
             }
 
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 0.7f, layerMask) && Input.GetKey(jumpKey) && (canWallclimb==true))
+        {
+            wallclimbing = true;
+            rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            rb.useGravity = false;
+            rb.velocity = new Vector3(0, 5, 0);
+            climbTime -= 1;
+
+        } else if ((!Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 0.7f, layerMask) || !Input.GetKey(jumpKey)))
+        {
+            wallclimbing = false;
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            rb.useGravity = true;
+        }
+
+    }
 
 
     void FixedUpdate()
     {
-       
-        
+        RaycastHit hit;
+
         //     QUESTO è IL MOVIMENTO SU X E Z
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W) && canFoward==true)
             {
                 transform.position += transform.forward * Time.deltaTime * moveSpeed * SpeedMolt;
             }
-        if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.S) && canBackwards==true)
             {
                 rb.position -= transform.forward * Time.deltaTime * moveSpeed * SpeedMolt;
             }
-        if (Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A) && canLeft==true)
             {
                 rb.position -= transform.right * Time.deltaTime * moveSpeed * SpeedMolt;
             }
-        if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.D) && canRight==true)
             {
                 rb.position += transform.right * Time.deltaTime * moveSpeed * SpeedMolt;
             }
